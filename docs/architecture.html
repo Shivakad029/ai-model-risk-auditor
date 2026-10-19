@@ -1,0 +1,218 @@
+<title>AI Model Risk Auditor</title>
+<style>
+  /* Layout: a vertical 5-stage pipeline of labeled bands over a platform base; mono component names, stripe = category. */
+  :root{
+    --bg:#f5f3ee; --surface:#ffffff; --surface-2:#efece5; --fg:#1b1a16; --muted:#6c6860;
+    --line:#dcd8d0; --accent:#6d4aff; --accent-soft:rgba(109,74,255,.10);
+    --good:#1f8a5b; --good-soft:rgba(31,138,91,.12);
+    --warn:#b5820a; --crit:#c0392f; --crit-soft:rgba(192,57,47,.12);
+    --font-sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    --font-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#131217; --surface:#1d1b22; --surface-2:#26232d; --fg:#ece9f1; --muted:#a7a2b2;
+    --line:#322e3a; --accent:#9b82ff; --accent-soft:rgba(155,130,255,.15);
+    --good:#46c08a; --good-soft:rgba(70,192,138,.16);
+    --warn:#e0a53b; --crit:#ef6b60; --crit-soft:rgba(239,107,96,.16); color-scheme:dark;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#131217; --surface:#1d1b22; --surface-2:#26232d; --fg:#ece9f1; --muted:#a7a2b2;
+    --line:#322e3a; --accent:#9b82ff; --accent-soft:rgba(155,130,255,.15);
+    --good:#46c08a; --good-soft:rgba(70,192,138,.16);
+    --warn:#e0a53b; --crit:#ef6b60; --crit-soft:rgba(239,107,96,.16); color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--fg);font-family:var(--font-sans);line-height:1.5}
+  .wrap{max-width:900px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));
+    padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:40px 56px}
+  header{margin-bottom:32px}
+  .eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--accent);font-weight:600}
+  h1{font-size:clamp(28px,6vw,42px);font-weight:700;margin:6px 0 4px;letter-spacing:-.02em;text-wrap:balance}
+  .tagline{font-size:16px;color:var(--muted);max-width:60ch;margin:0}
+  .note{margin-top:14px;display:inline-flex;gap:8px;align-items:center;font-family:var(--font-mono);
+    font-size:12px;color:var(--muted);background:var(--surface-2);border:1px solid var(--line);
+    border-radius:999px;padding:5px 12px}
+  .note b{color:var(--good);font-weight:600}
+
+  .band{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 18px 20px}
+  .bandhead{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .step{font-family:var(--font-mono);font-weight:600;font-size:13px;color:var(--accent);
+    background:var(--accent-soft);border:1px solid var(--accent);border-radius:7px;padding:2px 9px}
+  .layer{font-family:var(--font-mono);font-size:13px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--fg);font-weight:600}
+  .layer small{color:var(--muted);text-transform:none;letter-spacing:0;font-weight:400;margin-left:8px}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+  .card{background:var(--bg);border:1px solid var(--line);border-left:3px solid var(--stripe,var(--line));
+    border-radius:10px;padding:12px 13px;min-width:0;display:flex;flex-direction:column;gap:5px}
+  .k-core{--stripe:var(--accent)} .k-good{--stripe:var(--good)} .k-ext{--stripe:var(--muted)}
+  .cname{font-family:var(--font-mono);font-weight:600;font-size:14px;color:var(--fg);
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .crole{font-size:13px;color:var(--muted)}
+  .ctag{font-family:var(--font-mono);font-size:11px;letter-spacing:.03em;color:var(--muted);margin-top:1px}
+  .ctag.good{color:var(--good)}
+  .pill{font-family:var(--font-mono);font-size:11px;font-weight:600;border-radius:5px;padding:1px 7px;
+    border:1px solid currentColor}
+  .pill.crit{color:var(--crit);background:var(--crit-soft)}
+  .pill.good{color:var(--good);background:var(--good-soft)}
+  .pill.ext{color:var(--muted);background:var(--surface-2);font-weight:400}
+  .wide{grid-column:1/-1}
+
+  .flow{display:flex;justify-content:center;align-items:center;height:30px;color:var(--accent)}
+  .flow svg{width:18px;height:18px}
+
+  .platform{margin-top:24px;background:linear-gradient(180deg,var(--surface-2),var(--surface));
+    border:1px solid var(--line);border-radius:14px;padding:18px}
+  .pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:12px}
+  .pchip{font-family:var(--font-mono);font-size:12.5px;background:var(--bg);border:1px solid var(--line);
+    border-radius:8px;padding:9px 11px;color:var(--fg)}
+  .pchip span{display:block;color:var(--muted);font-family:var(--font-sans);font-size:11.5px;margin-top:2px}
+
+  .legend{margin-top:26px;display:flex;flex-wrap:wrap;gap:14px 20px;font-size:12.5px;color:var(--muted);
+    font-family:var(--font-mono)}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .sw{width:14px;height:14px;border-radius:4px;border-left:3px solid var(--c);background:var(--surface);
+    border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+  footer{margin-top:28px;padding-top:16px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);
+    font-family:var(--font-mono)}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap">
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">System architecture</div>
+    <h1>AI Model Risk Auditor</h1>
+    <p class="tagline">An agentic AI model-risk auditor: attack phrasings from PyRIT drive banking red-team objectives through a target assistant, each answer judged with evidence, scored, remediated, mapped to controls, and gated in CI.</p>
+    <div class="note"><b>Mock mode</b> runs fully offline &amp; deterministic — Azure services optional</div>
+  </header>
+
+  <!-- 01 -->
+  <section class="band">
+    <div class="bandhead"><span class="step">01</span><span class="layer">Attack sources<small>what to ask, and how to disguise it</small></span></div>
+    <div class="cards">
+      <div class="card k-ext">
+        <div class="cname">PyRIT <span class="pill ext">external · MIT</span></div>
+        <div class="crole">Adversarial jailbreak phrasings. Prefers the installed package; falls back to vendored templates.</div>
+      </div>
+      <div class="card k-core">
+        <div class="cname">objectives.yaml</div>
+        <div class="crole">Six banking test modules: Prompt Injection, Document Injection, Data Leakage, Hallucination, Fair Lending, Excessive Agency.</div>
+        <div class="ctag">benign goals + safe-answer criteria</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="flow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v16M6 14l6 6 6-6"/></svg></div>
+
+  <!-- 02 -->
+  <section class="band">
+    <div class="bandhead"><span class="step">02</span><span class="layer">Audit engine<small>run the suite against the target</small></span></div>
+    <div class="cards">
+      <div class="card k-core">
+        <div class="cname">attack_source</div>
+        <div class="crole">Expands each objective across the PyRIT phrasings into the ordered test suite.</div>
+      </div>
+      <div class="card k-core">
+        <div class="cname">runner</div>
+        <div class="crole">Drives every test case, single- and multi-turn, and streams progress events.</div>
+      </div>
+      <div class="card k-core wide">
+        <div class="cname">ABC Bank Assistant
+          <span class="pill crit">v1 · Critical</span><span class="pill good">v2 · Governed</span>
+        </div>
+        <div class="crole">The target bot: RAG over synthetic policies with mock money-movement tools. Six toggleable guardrails (Prompt Shields, doc scan, output filter, grounded-only, strip-protected, tool-authz). Mock engine, or a real Azure OpenAI deployment.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="flow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v16M6 14l6 6 6-6"/></svg></div>
+
+  <!-- 03 -->
+  <section class="band">
+    <div class="bandhead"><span class="step">03</span><span class="layer">Judging<small>pass / fail with evidence</small></span></div>
+    <div class="cards">
+      <div class="card k-good">
+        <div class="cname">Deterministic judge</div>
+        <div class="crole">Canary-string leaks · tool execution · fair-lending pair comparison.</div>
+        <div class="ctag good">proof, not opinion</div>
+      </div>
+      <div class="card k-core">
+        <div class="cname">LLM judge</div>
+        <div class="crole">Invented-policy / hallucination check via Azure OpenAI, with a deterministic grounding fallback.</div>
+        <div class="ctag">method recorded per finding</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="flow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v16M6 14l6 6 6-6"/></svg></div>
+
+  <!-- 04 -->
+  <section class="band">
+    <div class="bandhead"><span class="step">04</span><span class="layer">Analysis<small>score, fix, map to controls</small></span></div>
+    <div class="cards">
+      <div class="card k-core">
+        <div class="cname">scoring</div>
+        <div class="crole">Severity-weighted risk score and overall rating: Critical → Elevated → Guarded → Low.</div>
+      </div>
+      <div class="card k-good">
+        <div class="cname">remediation</div>
+        <div class="crole">Applies one control per failing module and re-tests it to prove the fix holds.</div>
+      </div>
+      <div class="card k-ext">
+        <div class="cname">regmap</div>
+        <div class="crole">Maps findings to SR 11-7 · NIST AI RMF · OWASP LLM Top 10 · ECOA / Reg B.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="flow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v16M6 14l6 6 6-6"/></svg></div>
+
+  <!-- 05 -->
+  <section class="band">
+    <div class="bandhead"><span class="step">05</span><span class="layer">Surfaces &amp; outputs<small>what people and pipelines consume</small></span></div>
+    <div class="cards">
+      <div class="card k-core">
+        <div class="cname">Validation report</div>
+        <div class="crole">Self-contained HTML: scorecard, findings with evidence transcripts, remediation, reg-map.</div>
+      </div>
+      <div class="card k-core">
+        <div class="cname">Release gate
+          <span class="pill crit">fail</span><span class="pill good">pass</span>
+        </div>
+        <div class="crole">GitLab CI stage: fails the build on risk threshold, any critical failure, or a control regression.</div>
+      </div>
+      <div class="card k-ext">
+        <div class="cname">Storage · SQLite</div>
+        <div class="crole">AI model inventory (“Model Inventory”) and full audit-run history.</div>
+      </div>
+      <div class="card k-core">
+        <div class="cname">API + Dashboard</div>
+        <div class="crole">FastAPI with Server-Sent Events; the live risk meter fills as each case is judged.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- platform -->
+  <section class="platform">
+    <div class="bandhead"><span class="step" style="color:var(--muted);border-color:var(--line);background:var(--surface-2)">⌁</span><span class="layer">Platform &amp; runtime<small>cross-cutting; swap mock for Azure with env vars</small></span></div>
+    <div class="pgrid">
+      <div class="pchip">Azure OpenAI<span>LLM target &amp; judge</span></div>
+      <div class="pchip">Azure AI Content Safety<span>Prompt Shields guardrail</span></div>
+      <div class="pchip">Azure AI Foundry<span>governance &amp; evals</span></div>
+      <div class="pchip">GitLab CI/CD<span>runs the release gate</span></div>
+      <div class="pchip">Python · FastAPI<span>services &amp; CLI</span></div>
+      <div class="pchip">Mock mode<span>offline, deterministic, no keys</span></div>
+    </div>
+  </section>
+
+  <div class="legend">
+    <span><span class="sw" style="--c:var(--accent)"></span>core pipeline</span>
+    <span><span class="sw" style="--c:var(--good)"></span>evidence &amp; proven fixes</span>
+    <span><span class="sw" style="--c:var(--muted)"></span>external · governance · storage</span>
+    <span><span class="pill crit">Critical / fail</span></span>
+    <span><span class="pill good">Governed / pass</span></span>
+  </div>
+
+  <footer>Flow is top-to-bottom; the platform layer is cross-cutting. Synthetic data only — not for use against production systems.</footer>
+</div>

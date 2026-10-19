@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Model Risk Auditor</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#171a22; --panel2:#1e222c; --line:#2a2f3a;
+    --ink:#e8e8ea; --muted:#9aa0ac; --accent:#7c5cff;
+    --good:#35c27f; --warn:#e0a53b; --bad:# e05a5a; --bad:#e05a5a; --crit:#ff4d6d;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.5 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+       background:var(--bg);color:var(--ink)}
+  header{padding:20px 28px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px}
+  header .logo{font-size:26px}
+  header h1{font-size:19px;margin:0;font-weight:650}
+  header .sub{color:var(--muted);font-size:13px;margin-top:2px}
+  header .src{margin-left:auto;font-size:12px;color:var(--muted);text-align:right}
+  .wrap{max-width:1120px;margin:auto;padding:24px 28px}
+  .controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:22px}
+  button{background:var(--accent);color:#fff;border:0;padding:11px 18px;border-radius:9px;
+         font-size:14px;font-weight:600;cursor:pointer}
+  button.secondary{background:var(--panel2);border:1px solid var(--line);color:var(--ink)}
+  button:disabled{opacity:.5;cursor:default}
+  .grid{display:grid;grid-template-columns:300px 1fr;gap:20px}
+  @media(max-width:820px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .meter{text-align:center;padding:26px 18px}
+  .rating{font-size:40px;font-weight:800;letter-spacing:.5px}
+  .riskno{font-size:15px;color:var(--muted);margin-top:4px}
+  .progress{height:10px;background:var(--panel2);border-radius:6px;overflow:hidden;margin:18px 0 6px}
+  .progress>div{height:100%;width:0;background:linear-gradient(90deg,var(--accent),#b39bff);transition:width .2s}
+  .counts{display:flex;justify-content:space-around;margin-top:14px;font-size:13px;color:var(--muted)}
+  .counts b{display:block;font-size:20px;color:var(--ink)}
+  .modules{display:grid;gap:10px}
+  .mod{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .mod .top{display:flex;justify-content:space-between;align-items:center}
+  .mod .name{font-weight:600}
+  .mod .sev{font-size:10px;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);
+            padding:1px 7px;border-radius:9px;margin-left:8px}
+  .bar{height:8px;background:#0c0e13;border-radius:5px;margin-top:9px;overflow:hidden}
+  .bar>div{height:100%;width:0;transition:width .25s}
+  .dots{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px}
+  .dot{width:11px;height:11px;border-radius:3px;background:var(--panel2);border:1px solid var(--line)}
+  .dot.pass{background:var(--good);border-color:var(--good)}
+  .dot.fail{background:var(--crit);border-color:var(--crit)}
+  .dot.ctrlfail{background:var(--warn);border-color:var(--warn)}
+  .gate{margin-top:16px;padding:14px 16px;border-radius:10px;font-weight:600;display:none}
+  .gate.pass{background:rgba(53,194,127,.12);border:1px solid var(--good);color:var(--good)}
+  .gate.fail{background:rgba(255,77,109,.1);border:1px solid var(--crit);color:var(--crit)}
+  .gate ul{margin:8px 0 0;padding-left:18px;font-weight:400;color:var(--ink)}
+  .log{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--muted);
+       max-height:220px;overflow:auto;margin-top:14px}
+  .log .f{color:var(--crit)} .log .p{color:var(--good)} .log .c{color:var(--warn)}
+  a.reportlink{color:#b39bff}
+  .hint{color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">🛡️</div>
+  <div>
+    <h1>AI Model Risk Auditor</h1>
+    <div class="sub">Agentic AI red-team &amp; model risk auditor · synthetic data only</div>
+  </div>
+  <div class="src" id="src">loading…</div>
+</header>
+
+<div class="wrap">
+  <div class="controls">
+    <button id="runV1">▶ Audit v1 (ungoverned)</button>
+    <button id="runV2" class="secondary">▶ Audit v2 (governed)</button>
+    <button id="remediate" class="secondary">🩹 Auto-remediate</button>
+    <span class="hint" id="hint"></span>
+  </div>
+
+  <div class="grid">
+    <div class="card meter">
+      <div class="rating" id="rating" style="color:var(--muted)">—</div>
+      <div class="riskno"><span id="risk">risk —</span> · <span id="label">no run yet</span></div>
+      <div class="progress"><div id="pbar"></div></div>
+      <div class="counts">
+        <div><b id="cPass">0</b>passed</div>
+        <div><b id="cFail">0</b>failed</div>
+        <div><b id="cCtrl">0</b>control</div>
+      </div>
+      <div class="gate" id="gate"></div>
+      <div class="log" id="log"></div>
+    </div>
+
+    <div class="card">
+      <div class="modules" id="modules"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const MODS = ["prompt_injection","doc_injection","data_leakage","hallucination","fair_lending","excessive_agency"];
+const TITLES = {prompt_injection:"Prompt Injection · prompt injection",doc_injection:"Document Injection · doc injection",
+  data_leakage:"Data Leakage · data leakage",hallucination:"Hallucination · hallucination",fair_lending:"Fair Lending · bias / fair lending",
+  excessive_agency:"Excessive Agency · unauthorized actions"};
+const COL = {pass:"#35c27f",warn:"#e0a53b",bad:"#ff4d6d"};
+let state = {};
+
+function resetModules(){
+  state = {};
+  const box = document.getElementById("modules"); box.innerHTML = "";
+  MODS.forEach(m=>{
+    state[m]={pass:0,fail:0,ctrl:0,total:0};
+    box.insertAdjacentHTML("beforeend",`
+      <div class="mod" id="mod-${m}">
+        <div class="top"><span><span class="name">${TITLES[m]}</span></span>
+          <span class="rate" id="rate-${m}">—</span></div>
+        <div class="bar"><div id="bar-${m}"></div></div>
+        <div class="dots" id="dots-${m}"></div>
+      </div>`);
+  });
+}
+function setRating(rating, risk){
+  const colors={Low:"#35c27f",Guarded:"#e0a53b",Elevated:"#ff8a3d",Critical:"#ff4d6d"};
+  const r=document.getElementById("rating"); r.textContent=rating; r.style.color=colors[rating]||"#9aa0ac";
+  document.getElementById("risk").textContent="risk "+risk;
+}
+function addDot(mod, cls){
+  document.getElementById("dots-"+mod).insertAdjacentHTML("beforeend",`<span class="dot ${cls}"></span>`);
+}
+function updateModuleBar(mod){
+  const s=state[mod]; if(!s.total) return;
+  const real=s.total-s.ctrl, realPass=s.pass; // approximate live rate
+  const rate=Math.round(100*s.pass/s.total);
+  const bar=document.getElementById("bar-"+mod);
+  bar.style.width=rate+"%";
+  bar.style.background = rate>=90?COL.pass: rate>=60?COL.warn: COL.bad;
+  document.getElementById("rate-"+mod).textContent=rate+"%";
+}
+function log(msg,cls){const l=document.getElementById("log");
+  l.insertAdjacentHTML("beforeend",`<div class="${cls||''}">${msg}</div>`); l.scrollTop=l.scrollHeight;}
+
+function run(version){
+  resetModules();
+  document.getElementById("log").innerHTML="";
+  document.getElementById("gate").style.display="none";
+  document.getElementById("label").textContent="running "+version+"…";
+  let pass=0,fail=0,ctrl=0,done=0,total=0;
+  disable(true);
+  const es=new EventSource("/api/audit/stream?bot_version="+version);
+  es.onmessage=(e)=>{
+    const d=JSON.parse(e.data);
+    if(d.event==="start"){ total=d.total;
+      log(`▶ ${version} — ${total} tests · source: ${d.pyrit_source} · engine: ${d.engine}`); }
+    else if(d.event==="case"){
+      done++; const s=state[d.module]; s.total++;
+      if(d.passed){pass++;s.pass++;addDot(d.module,"pass");}
+      else if(d.control){fail++;ctrl++;s.ctrl++;addDot(d.module,"ctrlfail");}
+      else {fail++;s.fail++;addDot(d.module,"fail");}
+      updateModuleBar(d.module);
+      document.getElementById("cPass").textContent=pass;
+      document.getElementById("cFail").textContent=fail;
+      document.getElementById("cCtrl").textContent=ctrl;
+      document.getElementById("pbar").style.width=Math.round(100*done/total)+"%";
+      if(!d.passed && !d.control) log(`✗ ${d.case_id} (${d.module}) — ${d.method}`,"f");
+    }
+    else if(d.event==="done"){
+      es.close(); disable(false);
+      const sc=d.scorecard; setRating(sc.rating,sc.risk_score);
+      document.getElementById("label").textContent=version+" complete";
+      sc.modules.forEach(m=>{ const b=document.getElementById("bar-"+m.module);
+        if(b){b.style.width=m.pass_rate+"%";
+          b.style.background=m.pass_rate>=90?COL.pass:m.pass_rate>=60?COL.warn:COL.bad;
+          document.getElementById("rate-"+m.module).textContent=m.pass_rate+"%";}});
+      log(`✓ done — ${sc.rating} (risk ${sc.risk_score})`,"p");
+      showGate(d.gate, d.run_id);
+    }
+  };
+  es.onerror=()=>{es.close();disable(false);log("stream error","f");};
+}
+function showGate(g, runId){
+  const el=document.getElementById("gate");
+  el.style.display="block";
+  el.className="gate "+(g.passed?"pass":"fail");
+  let html = g.passed ? "✅ Release gate PASS" : "❌ Release gate FAIL";
+  html += ` <span style="font-weight:400">(risk ${g.risk_score} / threshold ${g.threshold})</span>`;
+  if(g.reasons.length) html+="<ul>"+g.reasons.map(r=>`<li>${r}</li>`).join("")+"</ul>";
+  html+=`<div style="margin-top:8px"><a class="reportlink" href="/api/report/${runId}" target="_blank">Open validation report →</a></div>`;
+  el.innerHTML=html;
+}
+function remediate(){
+  disable(true); document.getElementById("hint").textContent="remediating each failing module…";
+  fetch("/api/remediate",{method:"POST"}).then(r=>r.json()).then(d=>{
+    disable(false); document.getElementById("hint").textContent="";
+    resetModules();
+    setRating(d.baseline.rating,d.baseline.risk_score);
+    document.getElementById("label").textContent="remediation result";
+    document.getElementById("log").innerHTML="";
+    log("🩹 Auto-remediation (one control per failing module):","p");
+    d.remediations.forEach(r=>{
+      const bar=document.getElementById("bar-"+r.module);
+      if(bar){bar.style.width=r.after_pass_rate+"%";
+        bar.style.background=r.after_pass_rate>=90?COL.pass:r.after_pass_rate>=60?COL.warn:COL.bad;
+        document.getElementById("rate-"+r.module).textContent=r.after_pass_rate+"%";}
+      const tag=r.resolved?"p":"c";
+      log(`${r.resolved?"✅":"◑"} ${r.module}: +${r.guardrail} ${r.before_pass_rate}%→${r.after_pass_rate}%`,tag);
+    });
+  }).catch(()=>{disable(false);log("remediate error","f");});
+}
+function disable(b){["runV1","runV2","remediate"].forEach(id=>document.getElementById(id).disabled=b);}
+
+document.getElementById("runV1").onclick=()=>run("v1");
+document.getElementById("runV2").onclick=()=>run("v2");
+document.getElementById("remediate").onclick=remediate;
+resetModules();
+fetch("/api/health").then(r=>r.json()).then(h=>{
+  document.getElementById("src").innerHTML=
+    `attack source: ${h.pyrit_source}<br>engine: ${h.engine} · judge: ${h.llm_judge?"LLM":"deterministic"} · gate ≤ ${h.gate_max_risk}`;
+});
+</script>
+</body>
+</html>

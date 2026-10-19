@@ -1,0 +1,13 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
+pyyaml>=6.0
+httpx>=0.27
+pytest>=8.0
+# Optional — only needed when AUDITOR_USE_LLM_* is enabled:
+openai>=1.40
+# Optional — only needed when AZURE_AUTH_MODE=entra (Microsoft Entra ID token auth):
+azure-identity>=1.17
+# Optional — the live attack source; the project vendors MIT-licensed PyRIT
+# templates and runs without it. Install to use PyRIT's full dataset at runtime:
+# pyrit>=1.1

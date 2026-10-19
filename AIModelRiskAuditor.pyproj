@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{B7A4F1C2-3D5E-4A6B-9C8D-1E2F3A4B5C6D}</ProjectGuid>
+    <ProjectHome>.</ProjectHome>
+    <StartupFile>run_server.py</StartupFile>
+    <SearchPath>
+    </SearchPath>
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <Name>AIModelRiskAuditor</Name>
+    <RootNamespace>AIModelRiskAuditor</RootNamespace>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <InterpreterId>Global|PythonCore|3.12</InterpreterId>
+    <IsWindowsApplication>False</IsWindowsApplication>
+    <TestFramework>Pytest</TestFramework>
+    <UnitTestRootDirectory>tests</UnitTestRootDirectory>
+    <UnitTestPattern>test_*.py</UnitTestPattern>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' " />
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' " />
+  <ItemGroup>
+    <Compile Include="app\__init__.py" />
+    <Compile Include="app\api.py" />
+    <Compile Include="app\auditor\__init__.py" />
+    <Compile Include="app\auditor\attack_source.py" />
+    <Compile Include="app\auditor\judge.py" />
+    <Compile Include="app\auditor\regmap.py" />
+    <Compile Include="app\auditor\remediation.py" />
+    <Compile Include="app\auditor\runner.py" />
+    <Compile Include="app\auditor\scoring.py" />
+    <Compile Include="app\cli.py" />
+    <Compile Include="app\config.py" />
+    <Compile Include="app\gate.py" />
+    <Compile Include="app\llm.py" />
+    <Compile Include="app\report.py" />
+    <Compile Include="app\storage.py" />
+    <Compile Include="app\target_bot\__init__.py" />
+    <Compile Include="app\target_bot\bot.py" />
+    <Compile Include="app\target_bot\guards.py" />
+    <Compile Include="run_server.py" />
+    <Compile Include="tests\test_audit.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Dockerfile" />
+    <Content Include="README.md" />
+    <Content Include="app\static\dashboard.html" />
+    <Content Include="attacks\objectives.yaml" />
+    <Content Include="attacks\pyrit_vendored\LICENSE" />
+    <Content Include="attacks\pyrit_vendored\NOTICE.md" />
+    <Content Include="attacks\pyrit_vendored\jailbreak\aim.yaml" />
+    <Content Include="attacks\pyrit_vendored\jailbreak\aligned.yaml" />
+    <Content Include="attacks\pyrit_vendored\jailbreak\anti_gpt.yaml" />
+    <Content Include="attacks\pyrit_vendored\jailbreak\better_dan.yaml" />
+    <Content Include="attacks\pyrit_vendored\jailbreak\dan_1.yaml" />
+    <Content Include="attacks\pyrit_vendored\seeds\psfuzz_steal_system.prompt" />
+    <Content Include="data\customers.json" />
+    <Content Include="data\policies\fees.md" />
+    <Content Include="data\policies\loans.md" />
+    <Content Include="data\policies\overdraft.md" />
+    <Content Include="data\policies\privacy.md" />
+    <Content Include="data\policies\wire_transfers.md" />
+    <Content Include="pytest.ini" />
+    <Content Include="requirements.txt" />
+    <Content Include="run.sh" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="app\" />
+    <Folder Include="app\auditor\" />
+    <Folder Include="app\static\" />
+    <Folder Include="app\target_bot\" />
+    <Folder Include="attacks\" />
+    <Folder Include="attacks\pyrit_vendored\" />
+    <Folder Include="attacks\pyrit_vendored\jailbreak\" />
+    <Folder Include="attacks\pyrit_vendored\seeds\" />
+    <Folder Include="data\" />
+    <Folder Include="data\policies\" />
+    <Folder Include="tests\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
+</Project>

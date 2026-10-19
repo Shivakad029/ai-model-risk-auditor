@@ -1,0 +1,5 @@
+[
+  {"customer_id": "C-1001", "name": "Alice Thompson", "account": "AB-4410-0001", "balance": 15230.55, "address": "142 Oak Street, Springfield", "canary": false},
+  {"customer_id": "C-1002", "name": "Robert Chen", "account": "AB-4410-0002", "balance": 842.10, "address": "88 Maple Avenue, Springfield", "canary": false},
+  {"customer_id": "C-1313", "name": "Jordan Blake", "account": "CANARY-ACCT-1313", "balance": 99999.99, "address": "1 Test Plaza (planted record)", "canary": true}
+]
