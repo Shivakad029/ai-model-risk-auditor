@@ -4,7 +4,7 @@
 
 An automated red-team harness that attacks a banking chatbot, judges the replies on hard evidence, scores the risk, and returns a **pass/fail release gate** — the way CI tests code.
 
-> ⚠️ **All data in this project is synthetic.** It is a test harness for a *fictional* "ABC Bank" assistant. Never point it at a production system. Secrets (the gateway team key) live in `.env`, which is git-ignored and never committed.
+> **All data in this project is synthetic.** It is a test harness for a *fictional* "ABC Bank" assistant. Never point it at a production system. Secrets (the gateway team key) live in `.env`, which is git-ignored and never committed.
 
 ---
 
@@ -123,12 +123,10 @@ flowchart TB
 
 ```bash
 # 1. clone
-git clone https://github.com/Shivakad029/Spookathon1.git
+git clone <path>
 cd Spookathon1
 
-# 2. (recommended) virtual environment
-python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
+# 2. run setuo.bat
 
 # 3. install dependencies
 pip install -r requirements.txt
@@ -178,8 +176,6 @@ uvicorn app.api:app --reload                # → http://127.0.0.1:8000
 python -m app.cli preflight                 # ping every configured model first
 python -m app.cli audit --version v2
 # → the scorecard prints live token usage, e.g.
-#   live model usage: 57 call(s), 48,210 tokens (in 44,980 / out 3,230)
-```
 
 **Replay a past run.** Every run is stored in SQLite (`output/auditor.db`), so any result can be re-opened without re-running:
 
@@ -213,10 +209,7 @@ Each run prints its own wall-clock time (`duration_s`) in the scorecard and logs
 | Role | Model ID | Endpoint |
 |---|---|---|
 | Target bot + hallucination judge (default) | **`claude-sonnet-5`** | Nexus AI gateway · Anthropic Messages API (`anthropic-version: 2023-06-01`) |
-| Other Claude models on the gateway | `claude-opus-5`, `claude-opus-4-8` | same Anthropic endpoint — set `ANTHROPIC_MODEL` |
-| OpenAI-compatible option | e.g. `gpt-5.6-terra` | Nexus AI gateway · OpenAI `chat/completions` (`AUDITOR_PROVIDER=openai`, set `AZURE_OPENAI_DEPLOYMENT`) |
 
-The active model is set by `ANTHROPIC_MODEL` (Anthropic) or `AZURE_OPENAI_DEPLOYMENT` (OpenAI path) in `.env`. Run `python -m app.cli ping` to print exactly which provider, endpoint and model ID are live.
 
 ---
 
@@ -234,7 +227,7 @@ The active model is set by `ANTHROPIC_MODEL` (Anthropic) or `AZURE_OPENAI_DEPLOY
 - **Scheduled re-audits** whenever a model's prompt or data changes
 
 **◆ Later — enterprise & compliance**
-- **Regulator-ready reports** mapped to SR 11-7 / NIST AI RMF / ECOA
+- **Regulator-ready reports** 
 - **Multi-model** coverage — test Claude and OpenAI side by side
 - **Continuous monitoring** — drift detection + alerting on live traffic
 - Human-in-the-loop review queue for borderline verdicts
@@ -243,8 +236,3 @@ The active model is set by `ANTHROPIC_MODEL` (Anthropic) or `AZURE_OPENAI_DEPLOY
 
 ---
 
-## Repository
-
-- **Code:** https://github.com/Shivakad029/Spookathon1
-- **Model:** `claude-sonnet-5` via the Nexus AI APIM gateway (Anthropic Messages API)
-- **Security:** synthetic data only; `.env` and the team key are never committed.
