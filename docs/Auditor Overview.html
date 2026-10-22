@@ -1,0 +1,197 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auditor Overview</title>
+<meta name="description" content="High-level architecture and runtime flow of the AI Model Risk Auditor.">
+<style>
+  :root{
+    --bg:#ffffff; --ink:#1a1d21; --muted:#5b636c; --line:#9aa3ad; --panel:#f6f8fa;
+    --ai:#1266d6; --ai-soft:#e7effb; --ok:#1f9b54; --ok-soft:#e8f6ee; --bad:#c0392b; --bad-soft:#fbe9e7; --warn:#c1521f;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0f1317; --ink:#e7ebef; --muted:#9aa3ad; --line:#5b636c; --panel:#161b21;
+      --ai:#5fa8ff; --ai-soft:#12203a; --ok:#4cc17e; --ok-soft:#15271d; --bad:#f07a68; --bad-soft:#2c1512; --warn:#e8935f;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f1317; --ink:#e7ebef; --muted:#9aa3ad; --line:#5b636c; --panel:#161b21;
+    --ai:#5fa8ff; --ai-soft:#12203a; --ok:#4cc17e; --ok-soft:#15271d; --bad:#f07a68; --bad-soft:#2c1512; --warn:#e8935f;
+  }
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px 16px 48px;}
+  h1{font-size:1.45rem;margin:.1em 0 .1em;}
+  h2{font-size:1.1rem;margin:2.2em 0 .2em;}
+  p.sub{color:var(--muted);margin:.2em 0 1em;font-size:.95rem;}
+  figure{margin:0;}
+  svg{width:100%;height:auto;color:var(--ink);}
+  figcaption{color:var(--muted);font-size:.9rem;margin-top:.7em;}
+  hr{border:none;border-top:1px solid var(--line);opacity:.4;margin:2.4em 0 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>AI Model Risk Auditor</h1>
+  <p class="sub">A test harness that attacks a banking chatbot, judges the replies on evidence, scores the risk, and gives a pass/fail release gate.</p>
+
+  <!-- ============ FIGURE 1: HIGH-LEVEL ARCHITECTURE ============ -->
+  <h2>High-level architecture</h2>
+  <figure>
+  <svg viewBox="0 0 1000 300" role="img" aria-label="Four layers left to right: the Attack Library (objectives.yaml and PyRIT jailbreak templates) feeds the Audit Engine (runner, judge, scoring, gate); the engine sends attacks to and receives replies from the Target and Model layer (the ABC Bank bot v1 or v2 with six guardrails, answered by the mock engine or live Claude via the Nexus AI gateway); the engine then writes to the Outputs layer (report, storage, dashboard).">
+    <defs>
+      <marker id="h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+      </marker>
+    </defs>
+
+    <!-- 1 Attack Library -->
+    <g>
+      <rect x="16" y="70" width="212" height="160" rx="11" fill="var(--panel)" stroke="var(--line)" stroke-width="1.5"/>
+      <text x="122" y="98" text-anchor="middle" font-size="15" font-weight="700" fill="currentColor">Attack Library</text>
+      <line x1="40" y1="110" x2="204" y2="110" stroke="var(--line)" stroke-width="1"/>
+      <text x="122" y="138" text-anchor="middle" font-size="12.5" fill="currentColor">objectives.yaml</text>
+      <text x="122" y="156" text-anchor="middle" font-size="11" fill="var(--muted)">53 banking test objectives</text>
+      <text x="122" y="188" text-anchor="middle" font-size="12.5" fill="currentColor">PyRIT jailbreaks</text>
+      <text x="122" y="206" text-anchor="middle" font-size="11" fill="var(--muted)">Claude-adapted · MIT</text>
+    </g>
+
+    <!-- 2 Audit Engine -->
+    <g>
+      <rect x="266" y="70" width="212" height="160" rx="11" fill="var(--panel)" stroke="var(--line)" stroke-width="1.5"/>
+      <text x="372" y="98" text-anchor="middle" font-size="15" font-weight="700" fill="currentColor">Audit Engine</text>
+      <line x1="290" y1="110" x2="454" y2="110" stroke="var(--line)" stroke-width="1"/>
+      <text x="372" y="134" text-anchor="middle" font-size="12.5" fill="currentColor">runner — drive the suite</text>
+      <text x="372" y="156" text-anchor="middle" font-size="12.5" fill="currentColor">judge — evidence verdict</text>
+      <text x="372" y="178" text-anchor="middle" font-size="12.5" fill="currentColor">scoring — weighted risk</text>
+      <text x="372" y="204" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--ok)">release gate — PASS/FAIL</text>
+    </g>
+
+    <!-- 3 Target & Model -->
+    <g>
+      <rect x="516" y="70" width="212" height="160" rx="11" fill="var(--panel)" stroke="var(--line)" stroke-width="1.5"/>
+      <text x="622" y="98" text-anchor="middle" font-size="15" font-weight="700" fill="currentColor">Target &amp; Model</text>
+      <line x1="540" y1="110" x2="704" y2="110" stroke="var(--line)" stroke-width="1"/>
+      <text x="622" y="132" text-anchor="middle" font-size="12.5" fill="currentColor">ABC Bank bot</text>
+      <text x="622" y="150" text-anchor="middle" font-size="11" fill="currentColor"><tspan fill="var(--warn)" font-weight="700">v1</tspan> off · <tspan fill="var(--ok)" font-weight="700">v2</tspan> 6 guardrails</text>
+      <rect x="536" y="166" width="172" height="26" rx="6" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+      <text x="622" y="184" text-anchor="middle" font-size="11.5" fill="currentColor">mock engine (offline)</text>
+      <rect x="536" y="196" width="172" height="28" rx="6" fill="var(--ai-soft)" stroke="var(--ai)" stroke-width="1.6"/>
+      <text x="622" y="214" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--ai)">Claude · Nexus AI gateway</text>
+    </g>
+
+    <!-- 4 Outputs -->
+    <g>
+      <rect x="772" y="70" width="212" height="160" rx="11" fill="var(--panel)" stroke="var(--line)" stroke-width="1.5"/>
+      <text x="878" y="98" text-anchor="middle" font-size="15" font-weight="700" fill="currentColor">Outputs</text>
+      <line x1="796" y1="110" x2="960" y2="110" stroke="var(--line)" stroke-width="1"/>
+      <text x="878" y="138" text-anchor="middle" font-size="12.5" fill="currentColor">report — HTML</text>
+      <text x="878" y="166" text-anchor="middle" font-size="12.5" fill="currentColor">storage — SQLite</text>
+      <text x="878" y="194" text-anchor="middle" font-size="12.5" fill="currentColor">dashboard — FastAPI</text>
+    </g>
+
+    <!-- arrows -->
+    <g stroke="currentColor" stroke-width="1.8" fill="none" marker-end="url(#h)">
+      <line x1="228" y1="150" x2="262" y2="150"/>
+      <line x1="478" y1="138" x2="512" y2="138"/>          <!-- engine -> target (attack) -->
+      <line x1="512" y1="170" x2="478" y2="170"/>          <!-- target -> engine (reply) -->
+      <line x1="728" y1="150" x2="768" y2="150"/>
+    </g>
+    <text x="495" y="130" text-anchor="middle" font-size="10" fill="var(--muted)">attack</text>
+    <text x="495" y="186" text-anchor="middle" font-size="10" fill="var(--muted)">reply</text>
+  </svg>
+  <figcaption>Everything runs offline by default; the only external dependency is the optional <b>live Claude</b> call (blue) through the Nexus AI gateway. The engine and the target exchange attack/reply pairs case by case; the serious verdicts never leave the engine.</figcaption>
+  </figure>
+
+  <hr>
+
+  <!-- ============ FIGURE 2: RUNTIME FLOW ============ -->
+  <h2>Runtime flow — one audit run</h2>
+  <figure>
+  <svg viewBox="0 0 760 880" role="img" aria-label="Flow from top to bottom. Run audit chooses v1 or v2. Build the test suite by combining objectives with jailbreaks into 53 cases. Then a per-case loop: the target bot applies guardrails (off for v1, on for v2) and answers via the mock engine or live Claude through the Nexus AI gateway; the judge returns a verdict using deterministic canary, tool and pair checks, with the LLM judge only for hallucination; the finding is collected. After the loop, scoring produces a weighted risk and rating, then the gate decision: if risk is within threshold with no critical and no control failure it passes and results are stored, reported and shown on the dashboard; otherwise the gate fails, stopping CI, and auto-remediation re-runs each failing module with its guardrail on.">
+    <defs>
+      <marker id="f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+      </marker>
+    </defs>
+
+    <!-- 1 run -->
+    <rect x="250" y="20" width="260" height="46" rx="23" fill="var(--panel)" stroke="var(--line)" stroke-width="1.6"/>
+    <text x="380" y="48" text-anchor="middle" font-size="14" font-weight="700" fill="currentColor">Run audit  ·  v1 or v2</text>
+
+    <!-- 2 build suite -->
+    <rect x="210" y="104" width="340" height="56" rx="10" fill="var(--panel)" stroke="var(--line)" stroke-width="1.5"/>
+    <text x="380" y="128" text-anchor="middle" font-size="13.5" font-weight="700" fill="currentColor">Build test suite</text>
+    <text x="380" y="147" text-anchor="middle" font-size="11.5" fill="var(--muted)">objectives × jailbreak templates → 53 cases</text>
+
+    <!-- loop container -->
+    <rect x="70" y="196" width="620" height="330" rx="14" fill="none" stroke="var(--line)" stroke-width="1.4" stroke-dasharray="6 5"/>
+    <text x="90" y="216" font-size="11.5" font-weight="700" fill="var(--muted)">FOR EACH CASE</text>
+
+    <!-- 3 bot -->
+    <rect x="210" y="236" width="340" height="80" rx="10" fill="var(--panel)" stroke="var(--line)" stroke-width="1.6"/>
+    <text x="380" y="260" text-anchor="middle" font-size="13.5" font-weight="700" fill="currentColor">Target bot answers the attack</text>
+    <text x="380" y="280" text-anchor="middle" font-size="11.5" fill="currentColor">guardrails: <tspan fill="var(--warn)" font-weight="700">v1 off</tspan> / <tspan fill="var(--ok)" font-weight="700">v2 on</tspan> (prompt_shield, output_filter, …)</text>
+    <text x="380" y="300" text-anchor="middle" font-size="11.5" fill="var(--muted)">engine: mock (offline)  or  <tspan fill="var(--ai)" font-weight="700">live Claude · Nexus AI gateway</tspan></text>
+
+    <!-- 4 judge -->
+    <rect x="210" y="356" width="340" height="68" rx="10" fill="var(--panel)" stroke="var(--line)" stroke-width="1.6"/>
+    <text x="380" y="380" text-anchor="middle" font-size="13.5" font-weight="700" fill="currentColor">Judge the reply</text>
+    <text x="380" y="399" text-anchor="middle" font-size="11.5" fill="currentColor">deterministic: canary · tool-check · pair-diff</text>
+    <text x="380" y="416" text-anchor="middle" font-size="11" fill="var(--muted)">LLM judge only for hallucination</text>
+
+    <!-- 5 collect -->
+    <rect x="270" y="462" width="220" height="44" rx="10" fill="var(--panel)" stroke="var(--line)" stroke-width="1.4"/>
+    <text x="380" y="489" text-anchor="middle" font-size="12.5" font-weight="700" fill="currentColor">Collect finding</text>
+
+    <!-- 6 score -->
+    <rect x="210" y="556" width="340" height="56" rx="10" fill="var(--panel)" stroke="var(--line)" stroke-width="1.5"/>
+    <text x="380" y="580" text-anchor="middle" font-size="13.5" font-weight="700" fill="currentColor">Score the run</text>
+    <text x="380" y="599" text-anchor="middle" font-size="11.5" fill="var(--muted)">severity-weighted risk → Low · Guarded · Elevated · Critical</text>
+
+    <!-- 7 gate diamond -->
+    <polygon points="380,636 520,700 380,764 240,700" fill="var(--ok-soft)" stroke="var(--ok)" stroke-width="2"/>
+    <text x="380" y="692" text-anchor="middle" font-size="12.5" font-weight="700" fill="currentColor">Release gate</text>
+    <text x="380" y="710" text-anchor="middle" font-size="10.5" fill="var(--muted)">risk ≤ threshold &amp;</text>
+    <text x="380" y="724" text-anchor="middle" font-size="10.5" fill="var(--muted)">no critical / control fail?</text>
+
+    <!-- PASS -->
+    <rect x="556" y="672" width="180" height="56" rx="10" fill="var(--ok-soft)" stroke="var(--ok)" stroke-width="1.6"/>
+    <text x="646" y="696" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--ok)">PASS</text>
+    <text x="646" y="714" text-anchor="middle" font-size="10.5" fill="var(--muted)">store · report · dashboard</text>
+
+    <!-- FAIL -->
+    <rect x="24" y="672" width="188" height="56" rx="10" fill="var(--bad-soft)" stroke="var(--bad)" stroke-width="1.6"/>
+    <text x="118" y="696" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--bad)">FAIL — CI stops</text>
+    <text x="118" y="714" text-anchor="middle" font-size="10.5" fill="var(--muted)">auto-remediate each module</text>
+
+    <!-- 8 remediate re-run note -->
+    <text x="118" y="760" text-anchor="middle" font-size="10.5" fill="var(--muted)">re-run module with its guardrail on</text>
+
+    <!-- arrows spine -->
+    <g stroke="currentColor" stroke-width="1.7" fill="none" marker-end="url(#f)">
+      <line x1="380" y1="66" x2="380" y2="102"/>
+      <line x1="380" y1="160" x2="380" y2="234"/>
+      <line x1="380" y1="316" x2="380" y2="354"/>
+      <line x1="380" y1="424" x2="380" y2="460"/>
+      <line x1="380" y1="506" x2="380" y2="554"/>
+      <line x1="380" y1="612" x2="380" y2="634"/>
+      <line x1="520" y1="700" x2="552" y2="700"/>
+      <line x1="240" y1="700" x2="216" y2="700"/>
+    </g>
+    <text x="536" y="692" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--ok)">yes</text>
+    <text x="228" y="692" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--bad)">no</text>
+    <!-- loop-back arrow from collect to bot -->
+    <path d="M270,484 C150,484 150,276 208,276" stroke="var(--line)" stroke-width="1.5" fill="none" stroke-dasharray="5 4" marker-end="url(#f)"/>
+    <text x="120" y="384" text-anchor="middle" font-size="10.5" fill="var(--muted)" transform="rotate(-90 120 384)">next case</text>
+  </svg>
+  <figcaption>The loop runs all 53 cases through the same bot and judge; only after the loop does scoring and the gate decide the outcome. The <b>v1 vs v2</b> difference is one switch — guardrails off or on — so the same run proves what the controls buy you.</figcaption>
+  </figure>
+</div>
+</body>
+</html>
+
+</body></html>
