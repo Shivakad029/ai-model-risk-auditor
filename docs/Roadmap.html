@@ -1,0 +1,115 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Roadmap</title>
+<meta name="description" content="Roadmap slide for the AI Model Risk Auditor — Now, Next, Later.">
+<style>
+  :root{
+    --bg:#eef1f5; --card:#ffffff; --ink:#15202b; --muted:#5a6675; --hair:#dbe1ea;
+    --accent:#1f6feb;
+    --now:#1f9b54; --now-s:#e8f6ee;
+    --next:#c1821f; --next-s:#fbf1dd;
+    --later:#5b53d6; --later-s:#ebe9fb;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0c0f13; --card:#161b22; --ink:#e8edf3; --muted:#9aa6b4; --hair:#28303a;
+      --accent:#5fa8ff;
+      --now:#4cc17e; --now-s:#142a1e;
+      --next:#e0a24a; --next-s:#2c2211;
+      --later:#9b94f5; --later-s:#1b1830;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0c0f13; --card:#161b22; --ink:#e8edf3; --muted:#9aa6b4; --hair:#28303a;
+    --accent:#5fa8ff;
+    --now:#4cc17e; --now-s:#142a1e; --next:#e0a24a; --next-s:#2c2211; --later:#9b94f5; --later-s:#1b1830;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;background:var(--bg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .stage{max-width:1060px;margin:0 auto;padding:16px;}
+  .slide{
+    aspect-ratio:16/9; container-type:size; position:relative;
+    background:var(--bg); color:var(--ink);
+    border:1px solid var(--hair); border-radius:3cqw; overflow:hidden;
+    padding:5.2cqw 5cqw 4cqw;
+    display:flex; flex-direction:column;
+  }
+  .kicker{font-size:1.7cqh; letter-spacing:.28em; font-weight:700; color:var(--accent); text-transform:uppercase;}
+  h1{font-size:5.2cqh; line-height:1.08; margin:.5cqh 0 0; font-weight:800; letter-spacing:-.01em;}
+  .sub{font-size:2.3cqh; color:var(--muted); margin:.9cqh 0 0;}
+  .rail{display:flex; gap:2.4cqw; margin-top:3.2cqh; flex:1;}
+  .col{flex:1; background:var(--card); border:1px solid var(--hair); border-radius:2cqw;
+       padding:2.6cqh 1.9cqw; display:flex; flex-direction:column;}
+  .col .top{display:flex; align-items:center; gap:1.1cqw;}
+  .dot{width:2.2cqh; height:2.2cqh; border-radius:50%; flex:none;}
+  .phase{font-size:2.9cqh; font-weight:800;}
+  .when{font-size:1.7cqh; color:var(--muted); margin:.3cqh 0 0 3.3cqw; font-weight:600;}
+  .bar{height:.7cqh; border-radius:1cqh; margin:1.7cqh 0 1.9cqh;}
+  ul{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:1.35cqh;}
+  li{font-size:2.15cqh; line-height:1.25; padding-left:2.6cqw; position:relative; color:var(--ink);}
+  li::before{content:""; position:absolute; left:0; top:.78cqh; width:1.1cqw; height:1.1cqw;
+    max-width:9px; max-height:9px; border-radius:2px; background:var(--mk);}
+  .now{--mk:var(--now);}   .now .dot{background:var(--now);}   .now .bar{background:var(--now-s);}   .now .phase{color:var(--now);}
+  .next{--mk:var(--next);} .next .dot{background:var(--next);} .next .bar{background:var(--next-s);} .next .phase{color:var(--next);}
+  .later{--mk:var(--later);}.later .dot{background:var(--later);}.later .bar{background:var(--later-s);}.later .phase{color:var(--later);}
+  .foot{margin-top:2.8cqh; font-size:2.05cqh; color:var(--muted); font-style:italic;}
+  .foot b{color:var(--ink); font-style:normal; font-weight:700;}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="slide">
+    <div class="kicker">AI Model Risk Auditor</div>
+    <h1>Roadmap — hackathon to production control</h1>
+    <div class="sub">From a working auditor today to a continuous, regulator-ready model-risk control.</div>
+
+    <div class="rail">
+      <section class="col now">
+        <div class="top"><span class="dot"></span><span class="phase">Now</span></div>
+        <div class="when">Shipped for the hackathon</div>
+        <div class="bar"></div>
+        <ul>
+          <li>6 risk domains · 53 adversarial tests (PyRIT)</li>
+          <li>Deterministic judging + v1-vs-v2 before/after</li>
+          <li>Pass/fail release gate</li>
+          <li>Live on Claude via Nexus AI · token &amp; cost tracking</li>
+        </ul>
+      </section>
+
+      <section class="col next">
+        <div class="top"><span class="dot"></span><span class="phase">Next</span></div>
+        <div class="when">Hardening · next quarter</div>
+        <div class="bar"></div>
+        <ul>
+          <li>Gate wired into GitLab CI — no model ships without a green scorecard</li>
+          <li>Persist &amp; trend every run on the dashboard</li>
+          <li>More techniques · multi-turn · custom bank policies</li>
+          <li>Scheduled re-audits on prompt / data change</li>
+        </ul>
+      </section>
+
+      <section class="col later">
+        <div class="top"><span class="dot"></span><span class="phase">Later</span></div>
+        <div class="when">Enterprise &amp; compliance</div>
+        <div class="bar"></div>
+        <ul>
+          <li>Regulator-ready reports — SR 11-7 · NIST AI RMF · ECOA</li>
+          <li>Multi-model: Claude &amp; OpenAI side by side</li>
+          <li>Continuous monitoring + drift alerts on live traffic</li>
+          <li>Human review queue for fuzzy verdicts</li>
+        </ul>
+      </section>
+    </div>
+
+    <div class="foot">Today it gates <b>a</b> release. Next, <b>every</b> release. Eventually, it <b>watches the model in production.</b></div>
+  </div>
+</div>
+</body>
+</html>
+
+</body></html>
