@@ -166,8 +166,8 @@ python -m app.cli remediate
 # write a self-contained HTML report
 python -m app.cli audit --version v2 --report report.html --with-remediation
 
-# live dashboard (REST + live Server-Sent-Events stream)
-uvicorn app.api:app --reload                # → http://127.0.0.1:8000
+# live dashboard - run run.bat
+http://127.0.0.1:8000
 ```
 
 **Live mode** (after filling in `.env`):
@@ -177,10 +177,7 @@ python -m app.cli preflight                 # ping every configured model first
 python -m app.cli audit --version v2
 # → the scorecard prints live token usage, e.g.
 
-**Replay a past run.** Every run is stored in SQLite (`output/auditor.db`), so any result can be re-opened without re-running:
 
-```bash
-python -m app.cli inventory                 # list stored models + latest risk/rating
 ```
 - **Dashboard:** the "recent runs" panel re-renders any stored run's full HTML report.
 - **API:** `GET /api/runs` lists run IDs; `GET /api/report/{run_id}` returns that run's saved report.
